@@ -103,14 +103,20 @@ function getSandboxCommand(
   // note: runsc is NOT auto-detected, it must be explicitly specified
   if (os.platform() === 'darwin' && commandExists.sync('sandbox-exec')) {
     return 'sandbox-exec';
-  } else if (commandExists.sync('docker') && sandbox === true) {
+  } else if (commandExists.sync('docker') && sandbox === true && os.platform() !== 'win32') {
     return 'docker';
-  } else if (commandExists.sync('podman') && sandbox === true) {
+  } else if (commandExists.sync('podman') && sandbox === true && os.platform() !== 'win32') {
     return 'podman';
   }
 
   // throw an error if user requested sandbox but no command was found
   if (sandbox === true) {
+    if (os.platform() === 'win32') {
+        throw new FatalSandboxError(
+          'No Windows, a selecao automatica do Docker para sandbox esta desativada por questoes de permissao de named pipe. ' +
+          'Por favor, defina explicitamente GEMINI_SANDBOX=docker se estiver rodando fora de um processo restrito.'
+        );
+    }
     throw new FatalSandboxError(
       'GEMINI_SANDBOX is true but failed to determine command for sandbox; ' +
         'install docker or podman or specify command in GEMINI_SANDBOX',
